@@ -1,6 +1,5 @@
 version: '2'
 services:
-
   mongo:
     image: mongo:4-bionic
     ports:
@@ -13,7 +12,7 @@ services:
   postgres:
     image: postgres:11-alpine
     ports:
-      - "5436:5432"
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: "vertx-in-action"
     volumes:
