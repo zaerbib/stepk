@@ -26,9 +26,6 @@
     <rest-assured.version>5.3.1</rest-assured.version>
     <assertj-core.version>3.24.1</assertj-core.version>
     <testcontainers.version>1.18.3</testcontainers.version>
-
-    <main.verticle>org.vertx.tuto.stepk.MainVerticle</main.verticle>
-    <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
   <dependencyManagement>
@@ -101,7 +98,6 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <Main-Class>${launcher.class}</Main-Class>
                     <Main-Verticle>${main.verticle}</Main-Verticle>
                   </manifestEntries>
                 </transformer>

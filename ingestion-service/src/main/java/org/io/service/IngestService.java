@@ -43,8 +43,10 @@ public class IngestService extends AbstractVerticle {
     AmqpClient.create(vertx, amqpClientOptions).rxConnect().flatMap(conn -> conn.rxCreateReceiver("step-events", receiverOptions)).flatMapPublisher(AmqpReceiver::toFlowable).doOnError(this::logAmqpError).retryWhen(this::retryLater).subscribe(this::handleAmqpMessage);
 
     Router router = Router.router(vertx);
-    router.post().handler(BodyHandler.create());
-    router.post("/ingest").handler(this::httpIngest);
+    router
+      .post("/ingest")
+      .handler(BodyHandler.create())
+      .handler(this::httpIngest);
 
     return vertx.createHttpServer().requestHandler(router).rxListen(HTTP_PORT).ignoreElement();
   }
@@ -59,7 +61,7 @@ public class IngestService extends AbstractVerticle {
 
   private Map<String, String> kafkaConfig() {
     Map<String, String> config = new HashMap<>();
-    config.put("boostrap.servers", "stepk_kafka_1:9092");
+    config.put("bootstrap.servers", "localhost:9092");
     config.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     config.put("value.serializer", "io.vertx.kafka.client.serialization.JsonObjectSerializer");
     config.put("acks", "1");
@@ -108,7 +110,7 @@ public class IngestService extends AbstractVerticle {
 
   private KafkaProducerRecord<String, JsonObject> makeKafkaRecord(JsonObject payload) {
     String deviceId = payload.getString("deviceId");
-    JsonObject recordData = new JsonObject().put("deviceId", payload.getString("deviceId")).put("deviceSync", payload.getString("deviceSync")).put("stepsCount", payload.getString("stepsCount"));
+    JsonObject recordData = new JsonObject().put("deviceId", payload.getString("deviceId")).put("deviceSync", payload.getLong("deviceSync")).put("stepsCount", payload.getInteger("stepsCount"));
 
     return KafkaProducerRecord.create("incoming.steps", deviceId, recordData);
   }
@@ -117,7 +119,9 @@ public class IngestService extends AbstractVerticle {
     System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
     Vertx vertx = Vertx.vertx();
     vertx.rxDeployVerticle(new IngestService())
-      .doOnSuccess(ok -> logger.info("HTTP server started on port {}", HTTP_PORT))
-      .doOnError(err -> logger.error("Woops", err)).subscribe();
+      .subscribe(
+        success -> logger.info("HTTP server started on port {}", HTTP_PORT),
+        fail -> logger.error("Woops : {}", fail.getMessage())
+      );
   }
 }

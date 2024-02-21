@@ -14,10 +14,7 @@ import io.vertx.rxjava3.core.RxHelper;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.kafka.admin.KafkaAdminClient;
 import io.vertx.rxjava3.kafka.client.consumer.KafkaConsumer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +45,9 @@ public class IngestServiceTest {
 
   @Container
   private static final DockerComposeContainer CONTAINERS =
-    new DockerComposeContainer(new File("../docker-compose.yml"))
+    new DockerComposeContainer(new File("../docker-compose-test.yml"))
       .withExposedService("artemis_1", 5672)
-      .withExposedService("kafka_1", 9092);
+      .withExposedService("broker_1", 9092);
 
   private static RequestSpecification requestSpecification;
   private static KafkaConsumer<String, JsonObject> kafkaConsumer;
@@ -183,7 +180,7 @@ public class IngestServiceTest {
       assertThat(record.key()).isEqualTo("456");
       JsonObject json = record.value();
       assertThat(json.getString("deviceId")).isEqualTo("456");
-      assertThat(json.getLong("deviceSync")).isEqualTo(3L);
+      assertThat(json.getLong("deviceSync")).isEqualTo(3);
       assertThat(json.getInteger("stepsCount")).isEqualTo(125);
       testContext.completeNow();
     }));
