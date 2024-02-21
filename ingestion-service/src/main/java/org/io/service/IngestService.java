@@ -40,7 +40,13 @@ public class IngestService extends AbstractVerticle {
     AmqpClientOptions amqpClientOptions = amqpConfig();
     AmqpReceiverOptions receiverOptions = new AmqpReceiverOptions().setAutoAcknowledgement(false).setDurable(true);
 
-    AmqpClient.create(vertx, amqpClientOptions).rxConnect().flatMap(conn -> conn.rxCreateReceiver("step-events", receiverOptions)).flatMapPublisher(AmqpReceiver::toFlowable).doOnError(this::logAmqpError).retryWhen(this::retryLater).subscribe(this::handleAmqpMessage);
+    AmqpClient.create(vertx, amqpClientOptions)
+      .rxConnect()
+      .flatMap(conn -> conn.rxCreateReceiver("step-events", receiverOptions))
+      .flatMapPublisher(AmqpReceiver::toFlowable)
+      .doOnError(this::logAmqpError)
+      .retryWhen(this::retryLater)
+      .subscribe(this::handleAmqpMessage);
 
     Router router = Router.router(vertx);
     router
@@ -94,9 +100,13 @@ public class IngestService extends AbstractVerticle {
       ctx.fail(400);
       return;
     }
-
+    //logger.info(payload.encodePrettily());
     KafkaProducerRecord<String, JsonObject> record = makeKafkaRecord(payload);
-    updateProducer.rxSend(record).doOnSuccess(item -> ctx.response().end()).doOnError(err -> {
+    updateProducer.rxSend(record)
+      .doOnSuccess(item -> ctx.response()
+        .putHeader("content-type", "application/json")
+        .end(String.valueOf(item.toJson().encodePrettily())))
+      .doOnError(err -> {
       logger.error("HTTP ingestion failed", err);
       ctx.fail(500);
     }).subscribe();
