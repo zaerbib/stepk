@@ -62,7 +62,10 @@ public class IngestService extends AbstractVerticle {
   }
 
   private AmqpClientOptions amqpConfig() {
-    return new AmqpClientOptions().setHost("localhost").setPort(5672).setUsername("artemis").setPassword("simetraehcapa");
+    return new AmqpClientOptions().setHost("localhost")
+      .setPort(5672)
+      .setUsername("artemis")
+      .setPassword("simetraehcapa");
   }
 
   private Map<String, String> kafkaConfig() {
@@ -107,9 +110,9 @@ public class IngestService extends AbstractVerticle {
         .putHeader("content-type", "application/json")
         .end(String.valueOf(item.toJson().encodePrettily())))
       .doOnError(err -> {
-      logger.error("HTTP ingestion failed", err);
-      ctx.fail(500);
-    }).subscribe();
+        logger.error("HTTP ingestion failed", err);
+        ctx.fail(500);
+      }).subscribe();
   }
 
   private boolean invalidIngestedJson(JsonObject payload) {
@@ -120,7 +123,10 @@ public class IngestService extends AbstractVerticle {
 
   private KafkaProducerRecord<String, JsonObject> makeKafkaRecord(JsonObject payload) {
     String deviceId = payload.getString("deviceId");
-    JsonObject recordData = new JsonObject().put("deviceId", payload.getString("deviceId")).put("deviceSync", payload.getLong("deviceSync")).put("stepsCount", payload.getInteger("stepsCount"));
+    JsonObject recordData = new JsonObject()
+      .put("deviceId", payload.getString("deviceId"))
+      .put("deviceSync", payload.getLong("deviceSync"))
+      .put("stepsCount", payload.getInteger("stepsCount"));
 
     return KafkaProducerRecord.create("incoming.steps", deviceId, recordData);
   }
