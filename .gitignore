@@ -194,3 +194,8 @@ nbdist/
 /mvnw
 /.editorconfig
 .idea/inspectionProfiles/Project_Default.xml
+/sender/.mvn/
+/sender/mvnw
+/sender/mvnw.cmd
+/sender/HELP.md
+/sender/sender.iml
