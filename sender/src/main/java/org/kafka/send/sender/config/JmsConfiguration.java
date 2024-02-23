@@ -22,7 +22,7 @@ public class JmsConfiguration {
   @Bean// Serialize message content to json using TextMessage
   public MessageConverter jacksonJmsMessageConverter() {
     MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-    converter.setTargetType(MessageType.TEXT);
+    converter.setTargetType(MessageType.BYTES);
     converter.setTypeIdPropertyName("_type");
     return converter;
   }

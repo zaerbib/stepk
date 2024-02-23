@@ -83,7 +83,7 @@ public class IngestService extends AbstractVerticle {
   }
 
   private void handleAmqpMessage(AmqpMessage message) {
-    if (!"application/json".equals(message.contentType()) || invalidIngestedJson(message.bodyAsJsonObject())) {
+    if (invalidIngestedJson(message.bodyAsJsonObject())) {
       logger.error("Invalid AMQP message (discarded): {}", message.bodyAsBinary());
       message.accepted();
       return;
