@@ -57,9 +57,16 @@ services:
     networks: [ "microservices" ]
 
   artemis:
-    image: vromero/activemq-artemis:2.13.0-alpine
+    image: vromero/activemq-artemis:2.15-latest
     ports:
       - "5672:5672"
+      - "61616:61616"
+    environment:
+      ENABLE_JMX_EXPORTER: "true"
+      ARTEMIS_MIN_MEMORY: "1512M"
+      ARTEMIS_MAX_MEMORY: "2000M"
+      ARTEMIS_USERNAME: "artemis"
+      ARTEMIS_PASSWORD: "simetraehcapa"
     networks:
       - microservices
 
