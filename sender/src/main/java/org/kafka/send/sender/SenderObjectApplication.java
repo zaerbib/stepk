@@ -24,7 +24,7 @@ public class SenderObjectApplication {
 		SpringApplication.run(SenderObjectApplication.class, args);
 	}
 
-  @Scheduled(fixedRate = 5000, initialDelay = 2000)
+  @Scheduled(fixedRate = 5000, initialDelay = 10000)
   public void sendListToAmqp() {
     generatListStep(1000)
       .forEach(publisher::send);

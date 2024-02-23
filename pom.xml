@@ -11,6 +11,7 @@
   <modules>
     <module>ingestion-service</module>
     <module>monitoring_kafka</module>
+      <module>activity-service</module>
   </modules>
 
   <properties>

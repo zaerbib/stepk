@@ -199,3 +199,8 @@ nbdist/
 /sender/mvnw.cmd
 /sender/HELP.md
 /sender/sender.iml
+/monitor/.mvn/
+/monitor/HELP.md
+/monitor/monitor.iml
+/monitor/mvnw
+/monitor/mvnw.cmd
