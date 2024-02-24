@@ -47,7 +47,8 @@ public class IngestServiceTest {
   private static final DockerComposeContainer CONTAINERS =
     new DockerComposeContainer(new File("../docker-compose-test.yml"))
       .withExposedService("artemis_1", 5672)
-      .withExposedService("broker_1", 9092);
+      .withExposedService("broker_1", 9092)
+      .withLocalCompose(true);
 
   private static RequestSpecification requestSpecification;
   private static KafkaConsumer<String, JsonObject> kafkaConsumer;
