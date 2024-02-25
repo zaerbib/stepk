@@ -58,7 +58,7 @@ public class IngestServiceTest {
   public static void prepareSpec() {
     requestSpecification = new RequestSpecBuilder()
       .addFilters(asList(new ResponseLoggingFilter(), new ResponseLoggingFilter()))
-      .setBaseUri("http://localhost:3002")
+      .setBaseUri("http://localhost:9098")
       .build();
   }
 
