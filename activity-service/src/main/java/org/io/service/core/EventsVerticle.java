@@ -47,14 +47,6 @@ public class EventsVerticle extends AbstractVerticle {
     return Completable.complete();
   }
 
-  @Override
-  public Completable rxStop() {
-    this.httpServer.close();
-    consumer.unregister();
-
-    return Completable.complete();
-  }
-
   private void startHttpServer() {
     RouterBuilder.create(vertx, "openapi.json")
       .doOnError(Throwable::printStackTrace)
@@ -63,7 +55,7 @@ public class EventsVerticle extends AbstractVerticle {
           routerBuilder.mountServicesFromExtensions();
           Router router = Router.newInstance(routerBuilder.createRouter().getDelegate());
           router.errorHandler(400, ctx -> {
-            log.debug("Bad request : "+ctx.failure());
+            log.debug("Bad request : " + ctx.failure());
           });
 
           httpServer = vertx.createHttpServer(new HttpServerOptions()

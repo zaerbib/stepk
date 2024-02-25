@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.io.service.config.SqlQueries;
 import org.io.service.service.StepAccountActivityService;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -44,25 +45,50 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
                                              String month,
                                              ServiceRequest request,
                                              Handler<AsyncResult<ServiceResponse>> resultHandler) {
-    LocalDateTime dateTime = LocalDateTime.of(
-      Integer.parseInt(year),
-      Integer.parseInt(month),
-      1,0,0
-    );
-
-    Tuple params = Tuple.of(deviceId, dateTime);
-    pgPool.preparedQuery(SqlQueries.monthlyStepCount())
-      .rxExecute(params)
-      .map(rs -> rs.iterator().next())
-      .subscribe(
-        row -> sendCount(resultHandler, row),
-        err -> handleError(resultHandler, err)
+    try {
+      LocalDateTime dateTime = LocalDateTime.of(
+        Integer.parseInt(year),
+        Integer.parseInt(month),
+        1, 0, 0
       );
+
+      Tuple params = Tuple.of(deviceId, dateTime);
+      pgPool.preparedQuery(SqlQueries.monthlyStepCount())
+        .rxExecute(params)
+        .map(rs -> rs.iterator().next())
+        .subscribe(
+          row -> sendCount(resultHandler, row),
+          err -> handleError(resultHandler, err)
+        );
+    } catch (DateTimeException | NumberFormatException e) {
+      sendBadRequest(resultHandler);
+    }
   }
 
   @Override
-  public void getStepCountParticularDay(String deviceId, String year, String month, String day, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void getStepCountParticularDay(String deviceId,
+                                        String year,
+                                        String month,
+                                        String day,
+                                        ServiceRequest request,
+                                        Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    try {
+      LocalDateTime dateTime = LocalDateTime.of(
+        Integer.parseInt(year),
+        Integer.parseInt(month),
+        Integer.parseInt(day), 0, 0);
 
+      Tuple params = Tuple.of(deviceId, dateTime);
+      pgPool.preparedQuery(SqlQueries.dailyStepsCount())
+        .rxExecute(params)
+        .map(rs -> rs.iterator().next())
+        .subscribe(
+          row -> sendCount(resultHandler, row),
+          err -> handleError(resultHandler, err)
+        );
+    } catch (DateTimeException | NumberFormatException e) {
+      sendBadRequest(resultHandler);
+    }
   }
 
   @Override
@@ -96,6 +122,16 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
       Future.succeededFuture(
         new ServiceResponse().setStatusCode(500)
           .setStatusMessage("Technical Error")
+      )
+    );
+  }
+
+  private void sendBadRequest(Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    log.error("Woops !!! Bad Request");
+    resultHandler.handle(
+      Future.succeededFuture(
+        new ServiceResponse().setStatusCode(400)
+          .setStatusMessage("Bad Request !!!")
       )
     );
   }

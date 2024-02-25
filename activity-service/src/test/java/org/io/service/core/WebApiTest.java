@@ -84,7 +84,7 @@ public class WebApiTest {
 
   @Test
   @DisplayName("Operation a few succesful steps count queries over the dataset")
-  void stepsCountQueries() {
+  void stepsCountQueries(Vertx vertx, VertxTestContext vertxTestContext) {
     JsonPath jsonPath = given()
       .spec(requestSpecification)
       .accept(ContentType.JSON)
@@ -133,5 +133,58 @@ public class WebApiTest {
 
     assertThat(jsonPath.getInt("count")).isEqualTo(620);
 
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05/20")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(200);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05/18")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/03")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/122/total")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/a/b/c")
+      .then()
+      .assertThat()
+      .statusCode(400);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/a/b")
+      .then()
+      .assertThat()
+      .statusCode(400);
+
+    vertxTestContext.completeNow();
   }
 }
