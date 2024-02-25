@@ -109,5 +109,29 @@ public class WebApiTest {
 
     assertThat(jsonPath.getInt("count")).isEqualTo(7161);
 
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/04")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(6541);
+
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(620);
+
   }
 }

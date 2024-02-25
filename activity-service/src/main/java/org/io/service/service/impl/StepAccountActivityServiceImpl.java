@@ -7,10 +7,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import io.vertx.rxjava3.pgclient.PgPool;
+import io.vertx.rxjava3.sqlclient.Row;
 import io.vertx.rxjava3.sqlclient.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.io.service.config.SqlQueries;
 import org.io.service.service.StepAccountActivityService;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 public class StepAccountActivityServiceImpl implements StepAccountActivityService {
@@ -31,35 +34,8 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
       .rxExecute(params)
       .map(rs -> rs.iterator().next())
       .subscribe(
-        row -> {
-          Integer count = row.getInteger(0);
-          if (count != null) {
-            JsonObject payload = new JsonObject();
-            payload.put("count", count);
-
-            resultHandler.handle(Future.succeededFuture(
-              ServiceResponse.completedWithJson(payload)
-                .putHeader("Content-Type", "application/json")
-                .setStatusCode(200)
-            ));
-          } else {
-            resultHandler.handle(Future.succeededFuture(
-              new ServiceResponse()
-                .setStatusCode(404)
-                .setStatusMessage("Device not found")
-            ));
-          }
-        },
-        err -> {
-          log.error("Woops !!!", err);
-          resultHandler.handle(
-            Future.succeededFuture(
-              new ServiceResponse().setStatusCode(500)
-                .setStatusMessage("Technical Error")
-            )
-          );
-        }
-      );
+        row -> sendCount(resultHandler, row),
+        err -> handleError(resultHandler, err));
   }
 
   @Override
@@ -68,7 +44,20 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
                                              String month,
                                              ServiceRequest request,
                                              Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    LocalDateTime dateTime = LocalDateTime.of(
+      Integer.parseInt(year),
+      Integer.parseInt(month),
+      1,0,0
+    );
 
+    Tuple params = Tuple.of(deviceId, dateTime);
+    pgPool.preparedQuery(SqlQueries.monthlyStepCount())
+      .rxExecute(params)
+      .map(rs -> rs.iterator().next())
+      .subscribe(
+        row -> sendCount(resultHandler, row),
+        err -> handleError(resultHandler, err)
+      );
   }
 
   @Override
@@ -79,5 +68,35 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
   @Override
   public void getRankingLast24Hours(ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
 
+  }
+
+  private void sendCount(Handler<AsyncResult<ServiceResponse>> resultHandler, Row row) {
+    Integer count = row.getInteger(0);
+    if (count != null) {
+      JsonObject payload = new JsonObject();
+      payload.put("count", count);
+
+      resultHandler.handle(Future.succeededFuture(
+        ServiceResponse.completedWithJson(payload)
+          .putHeader("Content-Type", "application/json")
+          .setStatusCode(200)
+      ));
+    } else {
+      resultHandler.handle(Future.succeededFuture(
+        new ServiceResponse()
+          .setStatusCode(404)
+          .setStatusMessage("Device not found")
+      ));
+    }
+  }
+
+  private void handleError(Handler<AsyncResult<ServiceResponse>> resultHandler, Throwable err) {
+    log.error("Woops !!!", err);
+    resultHandler.handle(
+      Future.succeededFuture(
+        new ServiceResponse().setStatusCode(500)
+          .setStatusMessage("Technical Error")
+      )
+    );
   }
 }
