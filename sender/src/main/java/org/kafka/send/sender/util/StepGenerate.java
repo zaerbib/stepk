@@ -20,9 +20,9 @@ public class StepGenerate {
 
   private Step genereateOne() {
     return Step.builder()
-      .deviceId(faker.idNumber().valid())
+      .deviceId(String.valueOf(faker.number().numberBetween(100, 1000)))
       .deviceSync(faker.number().numberBetween(1L, 1000L))
-      .stepsCount(faker.number().numberBetween(10L, 10_000_000))
+      .stepsCount(faker.number().numberBetween(10L, 15000L))
       .build();
   }
 }

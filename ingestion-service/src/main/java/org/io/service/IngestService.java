@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class IngestService extends AbstractVerticle {
 
-  private static final int HTTP_PORT = 3002;
+  private static final int HTTP_PORT = 9098;
   private static final Logger logger = LoggerFactory.getLogger(IngestService.class);
 
   private KafkaProducer<String, JsonObject> updateProducer;

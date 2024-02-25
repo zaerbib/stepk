@@ -1,8 +1,8 @@
-package org.kafka.send.sender;
+package org.monitoring.consumer.monitor;
 
 import org.junit.jupiter.api.Test;
 
-class SenderObjectApplicationTests {
+class ConsumeKafkaTests {
 
 	@Test
 	void contextLoads() {
