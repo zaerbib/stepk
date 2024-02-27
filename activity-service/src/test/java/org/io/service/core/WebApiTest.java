@@ -27,6 +27,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -184,6 +185,24 @@ public class WebApiTest {
       .then()
       .assertThat()
       .statusCode(400);
+
+    JsonPath jsonPath1 = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/ranking-last-24-hours")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+    List<HashMap<String, Object>> data = jsonPath1.getList("$");
+    assertThat(data.size()).isEqualTo(2);
+    assertThat(data.get(0))
+      .containsEntry("deviceId", "abc")
+      .containsEntry("stepsCount", 2500);
+    assertThat(data.get(1))
+      .containsEntry("deviceId", "def")
+      .containsEntry("stepsCount", 1000);
 
     vertxTestContext.completeNow();
   }
