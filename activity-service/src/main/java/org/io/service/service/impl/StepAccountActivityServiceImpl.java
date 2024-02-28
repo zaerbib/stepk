@@ -117,7 +117,9 @@ public class StepAccountActivityServiceImpl implements StepAccountActivityServic
       ));
     } else {
       resultHandler.handle(Future.succeededFuture(
-        new ServiceResponse()
+        ServiceResponse.completedWithJson(new JsonObject()
+          .put("message", "Device not found")
+          .put("code", "404"))
           .setStatusCode(404)
           .setStatusMessage("Device not found")
       ));

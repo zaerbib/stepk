@@ -10,7 +10,8 @@ public class PgConfig {
       .setHost("localhost")
       .setDatabase("postgres")
       .setUser("postgres")
-      .setPassword("vertx-in-action")
+      .setPassword("vertx")
+      .setPort(5432)
       .setCachePreparedStatements(true)
       .setLogActivity(true);
   }

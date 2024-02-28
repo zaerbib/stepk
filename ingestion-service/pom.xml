@@ -7,6 +7,7 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
+  <groupId>org.io.service</groupId>
   <artifactId>ingestion-service</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <name>ingestion-service</name>
