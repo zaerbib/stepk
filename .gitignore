@@ -204,3 +204,4 @@ nbdist/
 /monitor/monitor.iml
 /monitor/mvnw
 /monitor/mvnw.cmd
+.idea/InsidiousPlugin.xml
