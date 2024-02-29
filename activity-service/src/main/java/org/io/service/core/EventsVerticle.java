@@ -36,8 +36,6 @@ public class EventsVerticle extends AbstractVerticle {
   private KafkaProducer<String, JsonObject> updateProducer;
   private PgPool pgPool;
   private HttpServer httpServer;
-  private ServiceBinder serviceBinder;
-  private MessageConsumer<JsonObject> consumer;
 
   @Override
   public Completable rxStart() {
@@ -54,9 +52,7 @@ public class EventsVerticle extends AbstractVerticle {
         routerBuilder -> {
           routerBuilder.mountServicesFromExtensions();
           Router router = Router.newInstance(routerBuilder.createRouter().getDelegate());
-          router.errorHandler(400, ctx -> {
-            log.debug("Bad request : " + ctx.failure());
-          });
+          router.errorHandler(400, ctx -> log.debug("Bad request : " + ctx.failure()));
 
           httpServer = vertx.createHttpServer(new HttpServerOptions()
             .setPort(9097)
@@ -64,16 +60,14 @@ public class EventsVerticle extends AbstractVerticle {
           httpServer.requestHandler(router);
           httpServer.getDelegate().listen().mapEmpty();
         },
-        err -> {
-          log.debug("HttpServer Failed to start");
-        }
+        err -> log.debug("HttpServer Failed to start")
       );
   }
 
   private void startStepAccountActivityService() {
-    serviceBinder = new ServiceBinder(vertx.getDelegate());
+    ServiceBinder serviceBinder = new ServiceBinder(vertx.getDelegate());
     StepAccountActivityService service = StepAccountActivityService.create(pgPool);
-    consumer = serviceBinder.setAddress("activity.service.api")
+    serviceBinder.setAddress("activity.service.api")
       .register(StepAccountActivityService.class, service);
   }
 
@@ -83,14 +77,12 @@ public class EventsVerticle extends AbstractVerticle {
     pgPool = PgPool.pool(vertx, PgConfig.pgConnectOptions(), new PoolOptions());
 
     eventConsumer.subscribe("incoming.steps");
-    eventConsumer.handler(record -> {
-      insertRecord(record)
-        .flatMap(this::generateActivityUpdate)
-        .flatMap(this::commitKafkaConsumerOffset)
-        .doOnError(err -> log.error("Woops", err))
-        .retryWhen(this::retryLater)
-        .subscribe();
-    });
+    eventConsumer.handler(record -> insertRecord(record)
+      .flatMap(this::generateActivityUpdate)
+      .flatMap(this::commitKafkaConsumerOffset)
+      .doOnError(err -> log.error("Woops", err))
+      .retryWhen(this::retryLater)
+      .subscribe());
   }
 
   private Flowable<Throwable> retryLater(Flowable<Throwable> errs) {
