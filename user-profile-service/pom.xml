@@ -8,18 +8,19 @@
   </parent>
 
   <groupId>org.io.service</groupId>
-  <artifactId>activity-service</artifactId>
+  <artifactId>user-profile-service</artifactId>
   <packaging>jar</packaging>
 
-  <name>activity-service</name>
+  <name>user-profile-service</name>
   <url>http://maven.apache.org</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <main.verticle>org.io.service.ActivityService</main.verticle>
+    <main.verticle>org.io.service.UserProfileServiceApp</main.verticle>
   </properties>
 
   <dependencies>
+
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
@@ -63,6 +64,10 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-auth-mongo</artifactId>
     </dependency>
 
     <dependency>

@@ -11,7 +11,7 @@ services:
   mongo:
     image: mongo:4-bionic
     ports:
-      - "27017:27017"
+      - "27018:27017"
     environment:
       - MONGO_INITDB_DATABASE=profiles
     volumes:
@@ -24,7 +24,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: "vertx-in-action"
+      POSTGRES_PASSWORD: "vertx"
     volumes:
       - ./init/postgres:/docker-entrypoint-initdb.d/
     networks:

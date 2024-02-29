@@ -27,6 +27,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -84,7 +85,7 @@ public class WebApiTest {
 
   @Test
   @DisplayName("Operation a few succesful steps count queries over the dataset")
-  void stepsCountQueries() {
+  void stepsCountQueries(Vertx vertx, VertxTestContext vertxTestContext) {
     JsonPath jsonPath = given()
       .spec(requestSpecification)
       .accept(ContentType.JSON)
@@ -109,5 +110,100 @@ public class WebApiTest {
 
     assertThat(jsonPath.getInt("count")).isEqualTo(7161);
 
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/04")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(6541);
+
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(620);
+
+    jsonPath = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05/20")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+
+    assertThat(jsonPath.getInt("count")).isEqualTo(200);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/05/18")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/2019/03")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/122/total")
+      .then()
+      .assertThat()
+      .statusCode(404);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/a/b/c")
+      .then()
+      .assertThat()
+      .statusCode(400);
+
+    given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/123/a/b")
+      .then()
+      .assertThat()
+      .statusCode(400);
+
+    JsonPath jsonPath1 = given()
+      .spec(requestSpecification)
+      .accept(ContentType.JSON)
+      .get("/ranking-last-24-hours")
+      .then()
+      .assertThat()
+      .statusCode(200)
+      .extract()
+      .jsonPath();
+    List<HashMap<String, Object>> data = jsonPath1.getList("$");
+    assertThat(data.size()).isEqualTo(2);
+    assertThat(data.get(0))
+      .containsEntry("deviceId", "abc")
+      .containsEntry("stepsCount", 2500);
+    assertThat(data.get(1))
+      .containsEntry("deviceId", "def")
+      .containsEntry("stepsCount", 1000);
+
+    vertxTestContext.completeNow();
   }
 }

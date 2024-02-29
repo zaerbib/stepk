@@ -24,7 +24,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: "vertx-in-action"
+      POSTGRES_PASSWORD: "vertx"
     volumes:
       - ./init/postgres:/docker-entrypoint-initdb.d/
     networks:
