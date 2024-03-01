@@ -9,8 +9,8 @@ import io.vertx.ext.web.api.service.ServiceResponse;
 import io.vertx.rxjava3.ext.auth.mongo.MongoAuthentication;
 import io.vertx.rxjava3.ext.auth.mongo.MongoUserUtil;
 import io.vertx.rxjava3.ext.mongo.MongoClient;
-import io.vertx.rxjava3.ext.web.validation.RequestParameter;
 import lombok.extern.slf4j.Slf4j;
+import org.io.service.model.User;
 import org.io.service.service.UserProfileServiceApi;
 
 import java.util.NoSuchElementException;
@@ -29,10 +29,10 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void authenticate(RequestParameter body,
+  public void authenticate(User body,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler) {
-    authProvider.rxAuthenticate(body.getJsonObject())
+    authProvider.rxAuthenticate(body.toJson())
       .subscribe(
         user -> completeEmptySuccess(user.principal(), resultHandler),
         err -> handleAuthenticationError(err, resultHandler)
@@ -58,21 +58,21 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void getUserFromUsername(RequestParameter body,
+  public void getUserFromUsername(User body,
                                   ServiceRequest request,
                                   Handler<AsyncResult<ServiceResponse>> resultHandler) {
 
   }
 
   @Override
-  public void registerUser(RequestParameter body,
+  public void registerUser(User body,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler) {
 
   }
 
   @Override
-  public void updateUserFromUsername(RequestParameter body,
+  public void updateUserFromUsername(User body,
                                      ServiceRequest request,
                                      Handler<AsyncResult<ServiceResponse>> resultHandler) {
 

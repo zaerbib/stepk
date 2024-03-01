@@ -8,7 +8,7 @@ import io.vertx.ext.web.api.service.WebApiServiceGen;
 import io.vertx.rxjava3.ext.auth.mongo.MongoAuthentication;
 import io.vertx.rxjava3.ext.auth.mongo.MongoUserUtil;
 import io.vertx.rxjava3.ext.mongo.MongoClient;
-import io.vertx.rxjava3.ext.web.validation.RequestParameter;
+import org.io.service.model.User;
 import org.io.service.service.impl.UserProfileServiceApiImpl;
 
 
@@ -23,19 +23,19 @@ public interface UserProfileServiceApi {
     return new UserProfileServiceApiImpl(authProvider, userutil, mongoClient);
   }
 
-  void authenticate(RequestParameter body,
+  void authenticate(User body,
                     ServiceRequest request,
                     Handler<AsyncResult<ServiceResponse>> resultHandler);
   void getDeviceIdFromOwns(String deviceId,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void getUserFromUsername(RequestParameter body,
+  void getUserFromUsername(User body,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void registerUser(RequestParameter body,
+  void registerUser(User body,
                     ServiceRequest request,
                     Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void updateUserFromUsername(RequestParameter body,
+  void updateUserFromUsername(User body,
                               ServiceRequest request,
                               Handler<AsyncResult<ServiceResponse>> resultHandler);
 }
