@@ -1,5 +1,7 @@
 package org.io.service.service.impl;
 
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -68,7 +70,23 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   public void registerUser(User body,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    String username = body.getUsername();
+    String password = body.getPassword();
 
+    JsonObject extraInfo = new JsonObject()
+      .put("$set", new JsonObject())
+      .put("email", body.getEmail())
+      .put("city", body.getCity())
+      .put("deviceId", body.getDeviceId())
+      .put("makePublic", body.getMakePublic());
+
+    userUtil.rxCreateUser(username, password)
+      .flatMapMaybe(docId -> insertExtraInfo(extraInfo, docId))
+      .ignoreElement()
+      .subscribe(
+        () -> completeRegistration(resultHandler),
+        err -> handleRegistrationError(err, resultHandler)
+      );
   }
 
   @Override
@@ -125,5 +143,46 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
       new ServiceResponse()
         .setStatusCode(500)
     ));
+  }
+
+  private MaybeSource<? extends JsonObject> insertExtraInfo(JsonObject extraInfo, String docId) {
+    JsonObject query = new JsonObject().put("_id", docId);
+    return mongoClient
+      .rxFindOneAndUpdate("user", query, extraInfo)
+      .onErrorResumeNext(err -> deleteInCompleteUser(query, err));
+  }
+
+  private MaybeSource<? extends JsonObject> deleteInCompleteUser(JsonObject query, Throwable err) {
+    if(isIndexViolated(err)) {
+      return mongoClient
+        .rxRemoveDocument("user", query)
+        .flatMap(del -> Maybe.error(err));
+    } else {
+      return Maybe.error(err);
+    }
+  }
+
+  private boolean isIndexViolated(Throwable err) {
+    return err.getMessage().contains("E11000");
+  }
+
+  private void completeRegistration(Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    resultHandler.handle(Future.succeededFuture(
+      new ServiceResponse()
+        .setStatusCode(200)
+    ));
+  }
+
+  private void handleRegistrationError(Throwable err,
+                                       Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    if(isIndexViolated(err)) {
+      log.error("Registration failure: {}", err.getMessage());
+      resultHandler.handle(Future.succeededFuture(
+        new ServiceResponse()
+          .setStatusCode(409)
+      ));
+    } else {
+      fail500(err, resultHandler);
+    }
   }
 }

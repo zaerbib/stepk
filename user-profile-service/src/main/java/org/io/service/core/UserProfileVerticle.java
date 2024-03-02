@@ -18,7 +18,7 @@ import org.io.service.service.UserProfileServiceApi;
 
 @Slf4j
 public class UserProfileVerticle extends AbstractVerticle {
-  private static final int HTTP_PORT = 9098;
+  private static final int HTTP_PORT = 9095;
   private MongoClient mongoClient;
   private MongoAuthentication authProvider;
   private MongoUserUtil userUtil;
@@ -26,13 +26,13 @@ public class UserProfileVerticle extends AbstractVerticle {
 
   @Override
   public Completable rxStart() {
-    this.initMongFriendly();
+    this.initMongoFriendly();
     this.serviceBinder();
     this.startingHttpServer();
-    return super.rxStart();
+    return Completable.complete();
   }
 
-  private void initMongFriendly() {
+  private void initMongoFriendly() {
     mongoClient = MongoClient.createShared(vertx, MongoConfig.mongoConfig());
     authProvider = MongoAuthentication.create(mongoClient, new MongoAuthenticationOptions());
     userUtil = MongoUserUtil.create(mongoClient, new MongoAuthenticationOptions(), new MongoAuthorizationOptions());
@@ -47,7 +47,7 @@ public class UserProfileVerticle extends AbstractVerticle {
   }
 
   private void startingHttpServer() {
-    RouterBuilder.create(vertx, "openapi.json")
+    RouterBuilder.create(vertx, "openapi-user-profile.json")
       .doOnError(Throwable::printStackTrace)
       .subscribe(
         routerBuilder -> {
@@ -59,7 +59,7 @@ public class UserProfileVerticle extends AbstractVerticle {
             .setPort(HTTP_PORT)
             .setHost("localhost"));
           httpServer.requestHandler(router);
-          httpServer.getDelegate().listen().mapEmpty();
+          httpServer.getDelegate().listen(HTTP_PORT).mapEmpty();
         },
         err -> log.debug("HttpServer Failed to start")
       );

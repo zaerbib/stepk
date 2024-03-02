@@ -9,11 +9,13 @@ services:
   #      - microservices
 
   mongo:
-    image: mongo:4-bionic
+    image: mongo:7.0
     ports:
-      - "27018:27017"
+      - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=profiles
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
     volumes:
       - ./init/mongo:/docker-entrypoint-initdb.d
     networks:
@@ -71,7 +73,7 @@ services:
   mailhog:
     image: mailhog/mailhog:latest
     ports:
-      - "1025:1025"
+      - "1026:1025"
       - "8025:8025"
     networks:
       - microservices
