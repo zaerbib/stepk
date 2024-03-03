@@ -4,6 +4,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.IndexOptions;
@@ -26,7 +27,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @DisplayName("User profile API integration tests")
 @Testcontainers
 @Slf4j
-@Disabled
 public class UserProfileServiceAppTest {
   public static final int TEST_PORT = 27018;
 
@@ -81,7 +81,30 @@ public class UserProfileServiceAppTest {
 
   @Test
   @DisplayName("Authenticate an existing user")
-  void allHttpTest(Vertx vertx, VertxTestContext testContext) {
+  void registerTest(Vertx vertx, VertxTestContext testContext) {
+    JsonObject user = basicUser();
+
+    vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
+      HttpClient client = vertx.createHttpClient();
+      client.request(HttpMethod.POST, 9095, "localhost", "/register")
+        .compose(req -> {
+          req.putHeader("content-type", "application/json")
+            .setChunked(true)
+            .write(user.encode());
+          return req.send().compose(HttpClientResponse::body);
+        })
+        .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
+          JsonObject tmp = buffer.toJsonObject();
+          Assertions.assertEquals(user.getString("username"), tmp.getString("username"));
+          testContext.completeNow();
+        })))
+        .onFailure(testContext::failNow);
+    }));
+  }
+
+  @Test
+  @DisplayName("Register and fetch data")
+  void registerAndFetch(Vertx vertx, VertxTestContext testContext) {
     JsonObject user = basicUser();
 
     vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {

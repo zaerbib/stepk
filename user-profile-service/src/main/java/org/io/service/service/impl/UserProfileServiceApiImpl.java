@@ -34,7 +34,9 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void authenticate(User body, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void authenticate(User body,
+                           ServiceRequest request,
+                           Handler<AsyncResult<ServiceResponse>> resultHandler) {
     authProvider.authenticate(fromPojoToJson(body))
       .onSuccess(user ->
         completeEmptySuccess(user.principal(), resultHandler)
@@ -44,7 +46,9 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void getDeviceIdFromOwns(String deviceId, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void getDeviceIdFromOwns(String deviceId,
+                                  ServiceRequest request,
+                                  Handler<AsyncResult<ServiceResponse>> resultHandler) {
     JsonObject query = new JsonObject().put("deviceId", deviceId);
     JsonObject fields = new JsonObject().put("_id", 0).put("username", 1).put("deviceId", 1);
 
@@ -56,8 +60,23 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void getUserFromUsername(User body, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void getUserFromUsername(String username,
+                                  ServiceRequest request,
+                                  Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    JsonObject query = new JsonObject()
+      .put("username", username);
 
+    JsonObject fields = new JsonObject()
+      .put("_id", 0)
+      .put("username", 1)
+      .put("email", 1)
+      .put("deviceId", 1)
+      .put("city", 1)
+      .put("makePublic", 1);
+
+    mongoClient.findOne("user", query, fields)
+      .onSuccess(json -> completeFetchRequest(json, resultHandler))
+      .onFailure(err -> handleFetchError(err, resultHandler));
   }
 
   @Override
@@ -73,13 +92,17 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
     userUtil.createUser(body.getUsername(), body.getPassword())
       .map(docId -> {
         insertExtraInfo(extraInfo, docId);
-        return docId;
-      }).onSuccess(data -> completeRegistration(resultHandler))
+        return new JsonObject()
+          .put("username", body.getUsername())
+          .put("email", body.getEmail());
+      }).onSuccess(data -> completeRegistration(data, resultHandler))
       .onFailure(err -> handleRegistrationError(err, resultHandler));
   }
 
   @Override
-  public void updateUserFromUsername(User body, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void updateUserFromUsername(User body,
+                                     ServiceRequest request,
+                                     Handler<AsyncResult<ServiceResponse>> resultHandler) {
 
   }
 
@@ -98,7 +121,10 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   private void completeFetchRequest(JsonObject user, Handler<AsyncResult<ServiceResponse>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(user).putHeader("Content-Type", "application/json").setStatusCode(200)));
+    resultHandler.handle(Future.succeededFuture(
+      ServiceResponse.completedWithJson(user)
+        .putHeader("Content-Type", "application/json")
+        .setStatusCode(200)));
   }
 
   private void handleFetchError(Throwable err, Handler<AsyncResult<ServiceResponse>> resultHandler) {
@@ -129,8 +155,12 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
     return err.getMessage().contains("E11000");
   }
 
-  private void completeRegistration(Handler<AsyncResult<ServiceResponse>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(new ServiceResponse().setStatusCode(200)));
+  private void completeRegistration(JsonObject data,
+                                    Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    resultHandler.handle(Future.succeededFuture(
+      ServiceResponse.completedWithJson(data)
+        .setStatusCode(200)
+    ));
   }
 
   private void handleRegistrationError(Throwable err,

@@ -29,7 +29,7 @@ public interface UserProfileServiceApi {
   void getDeviceIdFromOwns(String deviceId,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void getUserFromUsername(User body,
+  void getUserFromUsername(String username,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
   void registerUser(User body,
