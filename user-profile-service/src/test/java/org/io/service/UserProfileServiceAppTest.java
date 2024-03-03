@@ -19,6 +19,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Unit test for simple App.
  */
@@ -63,6 +65,7 @@ public class UserProfileServiceAppTest {
     dropAllUsers()
       .onSuccess(res -> testContext.completeNow())
       .onFailure(testContext::failNow);
+    testContext.completeNow();
   }
 
   private Future<MongoClientDeleteResult> dropAllUsers() {
@@ -86,6 +89,7 @@ public class UserProfileServiceAppTest {
 
     vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
       HttpClient client = vertx.createHttpClient();
+
       client.request(HttpMethod.POST, 9095, "localhost", "/register")
         .compose(req -> {
           req.putHeader("content-type", "application/json")
@@ -100,24 +104,46 @@ public class UserProfileServiceAppTest {
         })))
         .onFailure(testContext::failNow);
     }));
+    testContext.completeNow();
   }
 
   @Test
   @DisplayName("Register and fetch data")
   void registerAndFetch(Vertx vertx, VertxTestContext testContext) {
     JsonObject user = basicUser();
+    AtomicReference<JsonObject> afterRegister = new AtomicReference<>();
 
     vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
       HttpClient client = vertx.createHttpClient();
       client.request(HttpMethod.POST, 9095, "localhost", "/register")
-        .onSuccess(requestH -> {
-          requestH.putHeader("content-type", "application/json");
-          requestH.setChunked(true);
-          requestH.write(user.encode());
-          requestH.end();
+        .compose(requestH -> {
+          requestH.putHeader("content-type", "application/json")
+            .setChunked(true)
+            .write(user.encode());
+          return requestH.send().compose(HttpClientResponse::body);
+        }).onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
+          afterRegister.set(buffer.toJsonObject());
+          Assertions.assertNotNull(buffer);
           testContext.completeNow();
-        }).onFailure(testContext::failNow);
+        })))
+        .onFailure(testContext::failNow);
+
+      client.request(HttpMethod.GET, 9095, "localhost", "/user/"+user.getString("username"))
+        .compose(req -> req.send().compose(HttpClientResponse::body))
+        .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
+          JsonObject test = buffer.toJsonObject();
+          Assertions.assertAll(
+            "user service test",
+            () -> Assertions.assertNotNull(buffer),
+            () -> Assertions.assertEquals(test.getString("username"), user.getString("username")),
+            () -> Assertions.assertEquals(test.getString("email"), user.getString("email")),
+            () -> Assertions.assertEquals(test.getString("deviceId"), user.getString("deviceId"))
+          );
+          testContext.completeNow();
+        })))
+        .onFailure(testContext::failNow);
     }));
+    testContext.completeNow();
   }
 
   private static DeploymentOptions createOptions() {
