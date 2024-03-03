@@ -29,10 +29,7 @@ public class EmbeddedMongoVerticle extends AbstractVerticle {
     JsonObject config = context.config();
     int port = config.getInteger("port", 0);
 
-    String version = config.getString("version", "3.4.3");
-    version = "V" + version.replace('.', '_');
-
-    final Version versionEnum = Version.valueOf(version);
+    final Version versionEnum = Version.valueOf("LATEST_NIGHTLY");
 
     IMongodConfig embeddedConfig = new MongodConfigBuilder()
       .version(versionEnum)
@@ -51,6 +48,10 @@ public class EmbeddedMongoVerticle extends AbstractVerticle {
     exe.start();
 
     actualPort = embeddedConfig.net().getPort();
+  }
+
+  public int actualPort() {
+    return actualPort;
   }
 
   @Override

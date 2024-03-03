@@ -9,7 +9,7 @@ public class MongoConfig {
   public JsonObject mongoConfig() {
     return new JsonObject()
       .put("host", "localhost")
-      .put("port", 27017)
+      .put("port", 27018)
       .put("db_name", "profiles");
   }
 }

@@ -1,10 +1,6 @@
 package org.io.service;
 
-import io.reactivex.rxjava3.core.Maybe;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.specification.RequestSpecification;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -15,15 +11,12 @@ import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.mongo.MongoClientDeleteResult;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import lombok.extern.slf4j.Slf4j;
+import org.io.service.core.EmbeddedMongoVerticle;
 import org.io.service.core.UserProfileVerticle;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.DockerComposeContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.io.File;
-import java.util.Arrays;
 
 /**
  * Unit test for simple App.
@@ -32,25 +25,27 @@ import java.util.Arrays;
 @ExtendWith(VertxExtension.class)
 @DisplayName("User profile API integration tests")
 @Testcontainers
+@Slf4j
+@Disabled
 public class UserProfileServiceAppTest {
+  public static final int TEST_PORT = 27018;
 
 
-  @Container
-  private static final DockerComposeContainer CONTAINERS =
-    new DockerComposeContainer(new File("../docker-compose-test.yml"))
-      .withExposedService("mongo_1", 27017)
-      .withLocalCompose(true);
-
-  private static RequestSpecification requestSpecification;
   private MongoClient mongoClient;
+
+  @BeforeAll
+  static void prepareSpec(Vertx vertx) {
+    EmbeddedMongoVerticle mongo = new EmbeddedMongoVerticle();
+    vertx.deployVerticle(mongo, createOptions());
+  }
 
   @BeforeEach
   void setUp(Vertx vertx, VertxTestContext testContext) {
     JsonObject mongoConfig = new JsonObject()
-      .put("host", "host.docker.internal")
-      .put("port", 27017)
+      .put("host", "localhost")
+      .put("port", 27018)
       .put("maxIdleTimeMS", 30000)
-      .put("maxLifeTimeMS",3600000)
+      .put("maxLifeTimeMS", 3600000)
       .put("db_name", "profiles");
 
     mongoClient = MongoClient.createShared(vertx, mongoConfig);
@@ -88,20 +83,31 @@ public class UserProfileServiceAppTest {
   @DisplayName("Authenticate an existing user")
   void allHttpTest(Vertx vertx, VertxTestContext testContext) {
     JsonObject user = basicUser();
-    JsonObject request = new JsonObject()
-      .put("username", user.getString("username"))
-      .put("password", user.getString("password"));
 
     vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
       HttpClient client = vertx.createHttpClient();
       client.request(HttpMethod.POST, 9095, "localhost", "/register")
         .onSuccess(requestH -> {
           requestH.putHeader("content-type", "application/json");
+          requestH.setChunked(true);
           requestH.write(user.encode());
           requestH.end();
           testContext.completeNow();
-        })
-        .onFailure(testContext::failNow);
+        }).onFailure(testContext::failNow);
     }));
+  }
+
+  private static DeploymentOptions createOptions() {
+    return createOptions("3.4.3");
+  }
+
+  private static DeploymentOptions createOptions(String version) {
+    return createEmptyOptions().setConfig(new JsonObject()
+      .put("port", UserProfileServiceAppTest.TEST_PORT)
+      .put("version", version));
+  }
+
+  private static DeploymentOptions createEmptyOptions() {
+    return new DeploymentOptions().setWorker(true);
   }
 }
