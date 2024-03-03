@@ -34,7 +34,6 @@ public class EventVerticleTest {
   @Container
   private static final DockerComposeContainer CONTAINERS = new DockerComposeContainer(new File("../docker-compose-test.yml"))
     .withExposedService("postgres_1", 5432)
-    .withExposedService("mongo_1", 27017)
     .withExposedService("broker_1", 9092)
     .withLocalCompose(true);
 

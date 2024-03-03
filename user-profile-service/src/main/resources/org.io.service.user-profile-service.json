@@ -1,0 +1,11 @@
+{
+  "main": "org.io.service.core.EmbeddedMongoVerticle",
+
+  "options": {
+    "worker": true,
+    "config": {
+      "port": 27018,
+      "version": "3.4.3"
+    }
+  }
+}

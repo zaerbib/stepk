@@ -42,7 +42,6 @@ public class WebApiTest {
   public static final DockerComposeContainer CONTAINERS =
     new DockerComposeContainer(new File("../docker-compose-test.yml"))
       .withExposedService("postgres_1", 5432)
-      .withExposedService("mongo_1", 27017)
       .withLocalCompose(true);
 
   private static RequestSpecification requestSpecification;

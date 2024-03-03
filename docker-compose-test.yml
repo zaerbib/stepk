@@ -9,7 +9,7 @@ services:
   #      - microservices
 
   mongo:
-    image: mongo:4-bionic
+    image: mongo:7.0
     ports:
       - "27018:27017"
     environment:
@@ -71,7 +71,7 @@ services:
   mailhog:
     image: mailhog/mailhog:latest
     ports:
-      - "1025:1025"
+      - "1026:1025"
       - "8025:8025"
     networks:
       - microservices

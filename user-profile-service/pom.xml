@@ -17,6 +17,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.verticle>org.io.service.UserProfileServiceApp</main.verticle>
+    <launcher.class>io.vertx.core.Launcher</launcher.class>
+    <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
   </properties>
 
   <dependencies>
@@ -69,6 +71,15 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-auth-mongo</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-mongo-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-factory</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.vertx</groupId>
@@ -79,6 +90,25 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5-rx-java3</artifactId>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>de.flapdoodle.embed</groupId>
+      <artifactId>de.flapdoodle.embed.mongo</artifactId>
+      <version>2.0.3</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -132,16 +162,33 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
+                    <Main-Class>${launcher.class}</Main-Class>
                     <Main-Verticle>${main.verticle}</Main-Verticle>
                   </manifestEntries>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
-              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-all.jar
+              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar
               </outputFile>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>${exec-maven-plugin.version}</version>
+        <configuration>
+          <mainClass>io.vertx.core.Launcher</mainClass>
+          <arguments>
+            <argument>run</argument>
+            <argument>${main.verticle}</argument>
+          </arguments>
+        </configuration>
       </plugin>
     </plugins>
   </build>

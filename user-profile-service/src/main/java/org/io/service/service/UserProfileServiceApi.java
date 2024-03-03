@@ -2,12 +2,12 @@ package org.io.service.service;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.ext.auth.mongo.MongoAuthentication;
+import io.vertx.ext.auth.mongo.MongoUserUtil;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.api.service.ServiceRequest;
 import io.vertx.ext.web.api.service.ServiceResponse;
 import io.vertx.ext.web.api.service.WebApiServiceGen;
-import io.vertx.rxjava3.ext.auth.mongo.MongoAuthentication;
-import io.vertx.rxjava3.ext.auth.mongo.MongoUserUtil;
-import io.vertx.rxjava3.ext.mongo.MongoClient;
 import org.io.service.model.User;
 import org.io.service.service.impl.UserProfileServiceApiImpl;
 
@@ -29,7 +29,7 @@ public interface UserProfileServiceApi {
   void getDeviceIdFromOwns(String deviceId,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void getUserFromUsername(User body,
+  void getUserFromUsername(String username,
                            ServiceRequest request,
                            Handler<AsyncResult<ServiceResponse>> resultHandler);
   void registerUser(User body,

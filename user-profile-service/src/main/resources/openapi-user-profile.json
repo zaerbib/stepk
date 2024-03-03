@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:9097/"
+      "url": "http://localhost:9095/"
     }
   ],
   "paths": {
@@ -194,7 +194,7 @@
             "type": "string"
           },
           "makePublic": {
-            "type": "string"
+            "type": "boolean"
           }
         }
       },

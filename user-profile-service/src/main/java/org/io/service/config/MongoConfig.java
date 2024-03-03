@@ -10,6 +10,6 @@ public class MongoConfig {
     return new JsonObject()
       .put("host", "localhost")
       .put("port", 27018)
-      .put("db_name", "proffiles");
+      .put("db_name", "profiles");
   }
 }
