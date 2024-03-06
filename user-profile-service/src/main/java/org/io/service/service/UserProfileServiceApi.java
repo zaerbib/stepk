@@ -35,7 +35,8 @@ public interface UserProfileServiceApi {
   void registerUser(User body,
                     ServiceRequest request,
                     Handler<AsyncResult<ServiceResponse>> resultHandler);
-  void updateUserFromUsername(User body,
+  void updateUserFromUsername(String username,
+                              User body,
                               ServiceRequest request,
                               Handler<AsyncResult<ServiceResponse>> resultHandler);
 }

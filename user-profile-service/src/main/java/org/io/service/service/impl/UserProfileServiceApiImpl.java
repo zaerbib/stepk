@@ -80,7 +80,9 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void registerUser(User body, ServiceRequest request, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  public void registerUser(User body,
+                           ServiceRequest request,
+                           Handler<AsyncResult<ServiceResponse>> resultHandler) {
 
     this.validationRegistration(body, resultHandler);
     JsonObject extraInfo = new JsonObject().put("$set", new JsonObject()
@@ -100,13 +102,24 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
   }
 
   @Override
-  public void updateUserFromUsername(User body,
+  public void updateUserFromUsername(String username,
+                                     User body,
                                      ServiceRequest request,
                                      Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    JsonObject bodyJson = fromPojoToJson(body);
+    JsonObject query = new JsonObject().put("username", username);
+    final JsonObject updates = new JsonObject();
 
+    bodyJson.stream().forEach(item -> updates.put(item.getKey(), item.getValue()));
+
+
+    mongoClient.findOneAndUpdate("user", query, new JsonObject().put("$set", updates))
+      .onSuccess(ok -> completeEmptySuccess(ok, resultHandler))
+      .onFailure(err -> handleUpdateError(err, resultHandler));
   }
 
-  private void completeEmptySuccess(JsonObject user, Handler<AsyncResult<ServiceResponse>> resultHandler) {
+  private void completeEmptySuccess(JsonObject user,
+                                    Handler<AsyncResult<ServiceResponse>> resultHandler) {
     resultHandler.handle(Future.succeededFuture(ServiceResponse.completedWithJson(user)
       .putHeader("Content-Type", "application/json")
       .setStatusCode(200)));
@@ -118,6 +131,11 @@ public class UserProfileServiceApiImpl implements UserProfileServiceApi {
       new ServiceResponse()
         .setStatusCode(401)
         .setStatusMessage("Authentication failed")));
+  }
+
+  private void handleUpdateError(Throwable err,
+                                 Handler<AsyncResult<ServiceResponse>> resultHandler) {
+    fail500(err, resultHandler);
   }
 
   private void completeFetchRequest(JsonObject user, Handler<AsyncResult<ServiceResponse>> resultHandler) {

@@ -19,8 +19,6 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Unit test for simple App.
  */
@@ -65,7 +63,6 @@ public class UserProfileServiceAppTest {
     dropAllUsers()
       .onSuccess(res -> testContext.completeNow())
       .onFailure(testContext::failNow);
-    testContext.completeNow();
   }
 
   private Future<MongoClientDeleteResult> dropAllUsers() {
@@ -111,24 +108,13 @@ public class UserProfileServiceAppTest {
   @DisplayName("Register and fetch data")
   void registerAndFetch(Vertx vertx, VertxTestContext testContext) {
     JsonObject user = basicUser();
-    AtomicReference<JsonObject> afterRegister = new AtomicReference<>();
+    mongoClient.save("user", basicUser())
+      .onSuccess(ok -> testContext.completeNow())
+      .onFailure(testContext::failNow);
 
     vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
       HttpClient client = vertx.createHttpClient();
-      client.request(HttpMethod.POST, 9095, "localhost", "/register")
-        .compose(requestH -> {
-          requestH.putHeader("content-type", "application/json")
-            .setChunked(true)
-            .write(user.encode());
-          return requestH.send().compose(HttpClientResponse::body);
-        }).onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
-          afterRegister.set(buffer.toJsonObject());
-          Assertions.assertNotNull(buffer);
-          testContext.completeNow();
-        })))
-        .onFailure(testContext::failNow);
-
-      client.request(HttpMethod.GET, 9095, "localhost", "/user/"+user.getString("username"))
+      client.request(HttpMethod.GET, 9095, "localhost", "/user/" + user.getString("username"))
         .compose(req -> req.send().compose(HttpClientResponse::body))
         .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
           JsonObject test = buffer.toJsonObject();
@@ -143,7 +129,42 @@ public class UserProfileServiceAppTest {
         })))
         .onFailure(testContext::failNow);
     }));
-    testContext.completeNow();
+  }
+
+  @Test
+  @DisplayName("Register then update user")
+  void updateUser(Vertx vertx, VertxTestContext testContext) {
+    JsonObject original = basicUser();
+    mongoClient.save("user", original)
+      .onSuccess(user -> testContext.completeNow())
+      .onFailure(testContext::failNow);
+
+    JsonObject update = original.put("deviceId", "vertx-in-action-123")
+      .put("email", "vertx@email.me")
+      .put("city", "Nevers")
+      .put("makePublic", false)
+      .put("username", "Bean");
+
+    vertx.deployVerticle(new UserProfileVerticle(), testContext.succeeding(id -> {
+      HttpClient client = vertx.createHttpClient();
+      client.request(HttpMethod.PUT, 9095, "localhot", "/user/" + original.getString("username"))
+        .compose(req -> {
+          req.putHeader("content-type", "application/json")
+            .setChunked(true)
+            .write(original.encode());
+          return req.send().compose(HttpClientResponse::body);
+        })
+        .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
+          JsonObject tmp = buffer.toJsonObject();
+          Assertions.assertEquals(update.getString("username"), tmp.getString("username"));
+          Assertions.assertEquals(update.getString("deviceId"), tmp.getString("deviceId"));
+          Assertions.assertEquals(update.getString("city"), tmp.getString("city"));
+          Assertions.assertEquals(update.getString("email"), tmp.getString("email"));
+          Assertions.assertEquals(update.getString("makePublic"), tmp.getString("makePublic"));
+
+          testContext.completeNow();
+        })));
+    }));
   }
 
   private static DeploymentOptions createOptions() {
